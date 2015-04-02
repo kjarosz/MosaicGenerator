@@ -27,6 +27,8 @@ public class MainImagePanel extends JPanel {
    private ImageButton mImageButton;
    private JTextField mImagePath;
    
+   private JButton mTriggerButton;
+   
    public MainImagePanel(ActionListener triggerListener) {
       setLayout(new BorderLayout());
       createScrollPaneButton();
@@ -117,5 +119,21 @@ public class MainImagePanel extends JPanel {
       JButton triggerButton = new JButton("Create Mosaic.");
       triggerButton.addActionListener(triggerListener);
       parent.add(triggerButton);
+   }
+   
+   public boolean hasImage() {
+      return mImageButton != null;
+   }
+   
+   public BufferedImage image() {
+      return mImageButton.getImage();
+   }
+   
+   public void setStatus(boolean done, String text) {
+      if(done) {
+         mTriggerButton.setText("Create Mosaic");
+      } else {
+         mTriggerButton.setText(text);
+      }
    }
 }
