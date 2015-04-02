@@ -56,13 +56,22 @@ public class DirectoryLoader extends SwingWorker<ImageDirectory, String> {
          try {
             BufferedImage image = ImageIO.read(imageFile);
             mImageDirectory.addImage(imageFile.getName(), image);
-            
-            publish("Loading " + (loaded/total) + "%");
-            setProgress(loaded/total);
+            updateProgress(loaded, total);
          } catch(IOException ignore) {
             
          }
       }
+   }
+   
+   private void updateProgress(int loaded, int total) {
+      int progress = calculateProgress(loaded, total);
+      publish("Loading " + progress + "%");
+      setProgress(progress);
+   }
+   
+   private int calculateProgress(int loaded, int total) {
+      float progress = ((float)loaded)/((float)total);
+      return (int)(progress*100.0);
    }
    
    @Override
