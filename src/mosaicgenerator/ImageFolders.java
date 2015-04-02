@@ -3,7 +3,9 @@ package mosaicgenerator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -20,7 +22,6 @@ import mosaicgenerator.components.ImageDirectory;
 import mosaicgenerator.components.ModifiedFlowLayout;
 
 public class ImageFolders extends JSplitPane {
-   
    private JPanel mImagePanel;
    private JPanel mDirectoryList;
    private LinkedList<ImageDirectory> mDirectoryButtons;
@@ -137,5 +138,18 @@ public class ImageFolders extends JSplitPane {
            mDirectoryList.repaint();
         }
       };
+   }
+   
+   public boolean hasImages() {
+      return mImagePanel.getComponents().length != 0;
+   }
+   
+   public LinkedList<BufferedImage> images() {
+      LinkedList<BufferedImage> images = new LinkedList<>();
+      for(ImageDirectory imgDir: mDirectoryButtons) {
+         Collection<BufferedImage> dirImages = imgDir.images();
+         images.addAll(dirImages);
+      }
+      return images;
    }
 }
