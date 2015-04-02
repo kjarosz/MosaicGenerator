@@ -63,6 +63,12 @@ public class ImageDirectory extends JButton implements MouseListener {
       mBackgroundLoader.execute();
    }
    
+   public void removeImages() {
+      for(ImageThumbnail item: mThumbnails) {
+         mImagePanel.remove(item);
+      }
+   }
+   
    private PropertyChangeListener getProgressTracker() {
       return new PropertyChangeListener() {
         @Override
@@ -156,12 +162,15 @@ public class ImageDirectory extends JButton implements MouseListener {
          g.drawString(folder, 5, 40);
       }
    }
+   
+   public boolean selected() {
+      return mSelected;
+   }
 
    @Override
    public void mouseClicked(MouseEvent arg0) {
       mSelected = !mSelected;
    }
-
    @Override
    public void mouseEntered(MouseEvent arg0) {
       mHover = true;      

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import javax.swing.BoxLayout;
@@ -92,6 +93,7 @@ public class ImageFolders extends JSplitPane {
       if(dir.exists() && dir.isDirectory() && dirIsNotUsed(dir)) {
          ImageDirectory imgDir = new ImageDirectory(mImagePanel);
          mDirectoryList.add(imgDir);
+         mDirectoryButtons.add(imgDir);
          imgDir.loadImages(dir);
       }
    }
@@ -121,7 +123,18 @@ public class ImageFolders extends JSplitPane {
       return new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-           
+           Iterator<ImageDirectory> it = mDirectoryButtons.iterator();
+           while(it.hasNext()) {
+              ImageDirectory dir = it.next();
+              if(dir.selected()) {
+                 dir.removeImages();
+                 mDirectoryList.remove(dir);
+                 it.remove();
+              }
+           }
+           mImagePanel.revalidate();
+           mDirectoryList.revalidate();
+           mDirectoryList.repaint();
         }
       };
    }
