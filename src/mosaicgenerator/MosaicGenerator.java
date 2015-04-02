@@ -4,8 +4,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class MosaicGenerator extends JFrame {
    
@@ -17,19 +19,20 @@ public class MosaicGenerator extends JFrame {
       
       setSize(800, 600);
       setVisible(true);
+      
    }
    
    private void createWidgets() {
       JTabbedPane tabs = new JTabbedPane();
       addMainImagePanel(tabs);      
-      
+      addFolderViewer(tabs);
       add(tabs);
    }
    
    private void addMainImagePanel(JTabbedPane parent) {
       ActionListener trigger = createTriggerListener();
       MainImagePanel mainImagePanel = new MainImagePanel(trigger);
-      parent.addTab("Image", mainImagePanel);
+      parent.addTab("1. Image", mainImagePanel);
    }
    
    private ActionListener createTriggerListener() {
@@ -41,12 +44,32 @@ public class MosaicGenerator extends JFrame {
       };
    }
    
+   private void addFolderViewer(JTabbedPane parent) {
+      ImageFolders folders = new ImageFolders();
+      parent.addTab("2. Folders", folders);
+   }
+   
    public static void main(String args[]) {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            setLookAndFeel();
             new MosaicGenerator();
          }
       });
+   }
+   
+   private static void setLookAndFeel() {
+      try {
+         UIManager.setLookAndFeel(
+               UIManager.getSystemLookAndFeelClassName());
+      } catch(Exception e) {
+         JOptionPane.showMessageDialog(null,
+               "There has been an error setting the look"
+               +" and feel.\nHere's the error in detail:\n\n"
+               +e.getMessage(),
+               "Error Setting Look and Feel",
+               JOptionPane.ERROR_MESSAGE);
+      }
    }
 }
