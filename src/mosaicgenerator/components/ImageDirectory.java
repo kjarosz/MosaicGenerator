@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -67,6 +68,10 @@ public class ImageDirectory extends JButton implements MouseListener {
       for(ImageThumbnail item: mThumbnails) {
          mImagePanel.remove(item);
       }
+   }
+   
+   public Collection<BufferedImage> images() {
+      return mImages.values();
    }
    
    private PropertyChangeListener getProgressTracker() {
