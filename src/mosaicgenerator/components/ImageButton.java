@@ -1,4 +1,4 @@
-package mosaicgenerator;
+package mosaicgenerator.components;
 
 import java.awt.Color;
 import java.awt.Dimension;

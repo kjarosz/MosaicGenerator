@@ -1,4 +1,4 @@
-package mosaicgenerator;
+package mosaicgenerator.utils;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -8,6 +8,8 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.SwingWorker;
+
+import mosaicgenerator.components.ImageDirectory;
 
 public class DirectoryLoader extends SwingWorker<ImageDirectory, String> {
    private ImageDirectory mImageDirectory;
@@ -56,9 +58,9 @@ public class DirectoryLoader extends SwingWorker<ImageDirectory, String> {
          try {
             BufferedImage image = ImageIO.read(imageFile);
             mImageDirectory.addImage(imageFile.getName(), image);
-            updateProgress(loaded, total);
+            updateProgress(++loaded, total);
          } catch(IOException ignore) {
-            
+            System.out.println("Image failed to load.");
          }
       }
    }

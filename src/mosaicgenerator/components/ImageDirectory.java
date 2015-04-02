@@ -1,32 +1,58 @@
-package mosaicgenerator;
+package mosaicgenerator.components;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import javax.swing.JButton;
+import javax.swing.JPanel;
 
-public class ImageDirectory extends JButton {
+import mosaicgenerator.utils.DirectoryLoader;
+
+public class ImageDirectory extends JButton implements MouseListener {
+   private final Color DISABLED = Color.CYAN;
+   private final Color DISABLED_HOVER = new Color(0, 160, 160);
+   private final Color ENABLED = Color.GREEN;
+   private final Color ENABLED_HOVER = new Color(0, 160, 0);
+   
+   private DirectoryLoader mBackgroundLoader;    
    private boolean mLoading;
    
-   private DirectoryLoader mBackgroundLoader;   
+   private boolean mSelected;
+   private boolean mHover;
    
    private File mDirectory;
    private HashMap<String, BufferedImage> mImages;
    
-   public ImageDirectory() {
+   private JPanel mImagePanel;
+   private LinkedList<ImageThumbnail> mThumbnails; 
+   
+   public ImageDirectory(JPanel imagePanel) {
       mDirectory = null;
       mLoading = false;
+      mSelected = false;
+      mHover = false;
       mImages = new HashMap<>();
+      mImagePanel = imagePanel;
+      mThumbnails = new LinkedList<>();
+      addMouseListener(this);
    }
    
    public void addImage(String name, BufferedImage image) {
       mImages.put(name, image);
+      ImageThumbnail thumb = new ImageThumbnail(image);
+      mThumbnails.add(thumb);
+      mImagePanel.add(thumb);
+      mImagePanel.revalidate();
+      mImagePanel.repaint();
    }
    
    public void loadImages(File directory) {
@@ -65,20 +91,12 @@ public class ImageDirectory extends JButton {
       return mDirectory;
    }
    
-   private Dimension getButtonSize() {
+   public Dimension getMinimumSize() {
       return new Dimension(100, 50);
    }
    
-   public Dimension getMinimumSize() {
-      return getButtonSize();
-   }
-   
-   public Dimension getPreferredSize() {
-      return getButtonSize();
-   }
-   
    public Dimension getMaximumSize() {
-      return getButtonSize();
+      return new Dimension(Integer.MAX_VALUE, 50);
    }
    
    @Override
@@ -92,11 +110,27 @@ public class ImageDirectory extends JButton {
       int width = getWidth();
       int height = getHeight();
       
-      drawRect(g, width, height, Color.GRAY);
+      drawBackground(g, width, height);
       
       if(mLoading) {
          float progress = mBackgroundLoader.getProgress()/100.0f;
          drawRect(g, (int)(width*progress), height, Color.GREEN);
+      }
+   }
+   
+   private void drawBackground(Graphics g, int width, int height) {
+      if(mSelected) {
+         if(mHover) {
+            drawRect(g, width, height, ENABLED_HOVER);
+         } else {
+            drawRect(g, width, height, ENABLED);
+         }
+      } else {
+         if(mHover) {
+            drawRect(g, width, height, DISABLED_HOVER);
+         } else {
+            drawRect(g, width, height, DISABLED);
+         }
       }
    }
    
@@ -108,8 +142,12 @@ public class ImageDirectory extends JButton {
    }
    
    private void drawStatusString(Graphics g) {
-      String text = getText();
-      g.drawString(text, 5, 20);
+      if(mLoading) {
+         String text = getText();
+         g.drawString(text, 5, 20);
+      } else {
+         g.drawString("Included.", 5, 20);
+      }
    }
    
    private void drawDirectoryString(Graphics g) {
@@ -118,4 +156,23 @@ public class ImageDirectory extends JButton {
          g.drawString(folder, 5, 40);
       }
    }
+
+   @Override
+   public void mouseClicked(MouseEvent arg0) {
+      mSelected = !mSelected;
+   }
+
+   @Override
+   public void mouseEntered(MouseEvent arg0) {
+      mHover = true;      
+   }
+   @Override
+   public void mouseExited(MouseEvent arg0) {
+      mHover = false;
+   }
+
+   @Override
+   public void mousePressed(MouseEvent arg0) {}
+   @Override
+   public void mouseReleased(MouseEvent arg0) {}
 }

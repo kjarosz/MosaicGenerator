@@ -20,6 +20,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import mosaicgenerator.components.ImageButton;
+
 public class MainImagePanel extends JPanel {
    private JScrollPane mScrollPane;
    private ImageButton mImageButton;

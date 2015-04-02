@@ -26,6 +26,8 @@ public class MosaicGenerator extends JFrame {
       JTabbedPane tabs = new JTabbedPane();
       addMainImagePanel(tabs);      
       addFolderViewer(tabs);
+      addSettingsPage(tabs);
+      addResultsPage(tabs);
       add(tabs);
    }
    
@@ -47,6 +49,16 @@ public class MosaicGenerator extends JFrame {
    private void addFolderViewer(JTabbedPane parent) {
       ImageFolders folders = new ImageFolders();
       parent.addTab("2. Folders", folders);
+   }
+   
+   private void addSettingsPage(JTabbedPane parent) {
+      SettingsPage settings = new SettingsPage();
+      parent.addTab("3. Settings", settings);
+   }
+   
+   private void addResultsPage(JTabbedPane parent) {
+      ResultsPage results = new ResultsPage();
+      parent.addTab("4. Generator", results);
    }
    
    public static void main(String args[]) {

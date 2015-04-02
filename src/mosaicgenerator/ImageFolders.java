@@ -4,30 +4,41 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.LinkedList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+
+import mosaicgenerator.components.ImageDirectory;
+import mosaicgenerator.components.ModifiedFlowLayout;
 
 public class ImageFolders extends JSplitPane {
    
    private JPanel mImagePanel;
    private JPanel mDirectoryList;
+   private LinkedList<ImageDirectory> mDirectoryButtons;
    
    public ImageFolders() {
       super(JSplitPane.HORIZONTAL_SPLIT);
+      mDirectoryButtons = new LinkedList<>();
       setLeftComponent(createFolderView());
       setRightComponent(createFolderLoader());
-      
+      setResizeWeight(0.75);
    }
    
    private JScrollPane createFolderView() {
-      mImagePanel = new JPanel();
+      mImagePanel = new JPanel(new ModifiedFlowLayout());
       JScrollPane scroller = new JScrollPane(mImagePanel);
+      scroller.setHorizontalScrollBarPolicy(
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      scroller.setVerticalScrollBarPolicy(
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       return scroller;
    }
    
@@ -78,11 +89,25 @@ public class ImageFolders extends JSplitPane {
       }
       
       File dir = chooser.getSelectedFile();
-      if(dir.exists() && dir.isDirectory()) {
-         ImageDirectory imgDir = new ImageDirectory();
+      if(dir.exists() && dir.isDirectory() && dirIsNotUsed(dir)) {
+         ImageDirectory imgDir = new ImageDirectory(mImagePanel);
          mDirectoryList.add(imgDir);
          imgDir.loadImages(dir);
       }
+   }
+   
+   private boolean dirIsNotUsed(File directory) {
+      for(ImageDirectory imgDir: mDirectoryButtons) {
+         File loadedDir = imgDir.getDirectory();
+         if(loadedDir.equals(directory)) {
+            JOptionPane.showMessageDialog(this,
+                  "Directory already loaded.",
+                  "Directory Exists",
+                  JOptionPane.INFORMATION_MESSAGE);
+            return false;
+         }
+      }
+      return true;
    }
    
    private void createRemoveButton(JPanel parent) {
