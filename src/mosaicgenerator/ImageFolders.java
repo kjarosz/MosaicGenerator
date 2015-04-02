@@ -3,9 +3,11 @@ package mosaicgenerator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -39,7 +41,7 @@ public class ImageFolders extends JSplitPane {
    private void createFolderList(JPanel parent) {
       mDirectoryList = new JPanel();
       mDirectoryList.setLayout(new BoxLayout(mDirectoryList, BoxLayout.Y_AXIS));
-      JList scroller = new JList(mDirectoryList);
+      JScrollPane scroller = new JScrollPane(mDirectoryList);
       parent.add(scroller, BorderLayout.CENTER);
    }
    
@@ -58,13 +60,29 @@ public class ImageFolders extends JSplitPane {
    }
    
    private ActionListener createAddAction() {
+      final JComponent me = this;
       return new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             JFileChooser chooser = new JFileChooser();
-            chooser.setD
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            int result = chooser.showOpenDialog(me);
+            createDirectoryButton(result, chooser);
          }
       };
+   }
+   
+   private void createDirectoryButton(int result, JFileChooser chooser) {
+      if(result != JFileChooser.APPROVE_OPTION) {
+         return;
+      }
+      
+      File dir = chooser.getSelectedFile();
+      if(dir.exists() && dir.isDirectory()) {
+         ImageDirectory imgDir = new ImageDirectory();
+         mDirectoryList.add(imgDir);
+         imgDir.loadImages(dir);
+      }
    }
    
    private void createRemoveButton(JPanel parent) {
