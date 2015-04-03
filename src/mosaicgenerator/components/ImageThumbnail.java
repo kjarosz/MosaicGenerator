@@ -51,7 +51,7 @@ public class ImageThumbnail extends JButton {
       
       scaleImage();
       if(mScaledImage != null) {
-         g.drawImage(mImage, 0, 0, getWidth(), getHeight(), null);
+         g.drawImage(mScaledImage, 0, 0, getWidth(), getHeight(), null);
       }
    }
    

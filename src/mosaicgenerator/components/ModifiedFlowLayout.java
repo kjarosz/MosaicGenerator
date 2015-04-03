@@ -36,7 +36,7 @@ public class ModifiedFlowLayout extends FlowLayout {
     }
    
     private Dimension computeSize(Container target) {
-       synchronized (target.getTreeLock()) {
+       
           int hgap = getHgap();
           int vgap = getVgap();
           int w = target.getWidth();
@@ -83,30 +83,28 @@ public class ModifiedFlowLayout extends FlowLayout {
           y += rowHeight;
           y += insets.bottom;
           return new Dimension(reqdWidth+insets.left+insets.right, y);
-       }
+       
     }
    
     private Dimension computeMinSize(Container target) {
-       synchronized (target.getTreeLock()) {
-          int minx = Integer.MAX_VALUE;
-          int miny = Integer.MIN_VALUE;
-          boolean found_one = false;
-          int n = target.getComponentCount();
+       int minx = Integer.MAX_VALUE;
+       int miny = Integer.MIN_VALUE;
+       boolean found_one = false;
+       int n = target.getComponentCount();
    
-          for (int i = 0; i < n; i++) {
-             Component c = target.getComponent(i);
-             if (c.isVisible()) {
-                found_one = true;
-                Dimension d = c.getPreferredSize();
-                minx = Math.min(minx, d.width);
-                miny = Math.min(miny, d.height);
-             }
+       for (int i = 0; i < n; i++) {
+          Component c = target.getComponent(i);
+          if (c.isVisible()) {
+             found_one = true;
+             Dimension d = c.getPreferredSize();
+             minx = Math.min(minx, d.width);
+             miny = Math.min(miny, d.height);
           }
-          if (found_one) {
-             return new Dimension(minx, miny);
-          }
-          return new Dimension(0, 0);
        }
+       if (found_one) {
+          return new Dimension(minx, miny);
+       }
+       return new Dimension(0, 0);
     }
 
        

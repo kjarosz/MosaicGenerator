@@ -116,9 +116,9 @@ public class MainImagePanel extends JPanel {
    }
    
    private void createTrigger(JPanel parent, ActionListener triggerListener) {
-      JButton triggerButton = new JButton("Create Mosaic.");
-      triggerButton.addActionListener(triggerListener);
-      parent.add(triggerButton);
+      mTriggerButton = new JButton("Create Mosaic.");
+      mTriggerButton.addActionListener(triggerListener);
+      parent.add(mTriggerButton);
    }
    
    public boolean hasImage() {
