@@ -175,7 +175,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
          }
       }
       
-      return tile.mUseCount*10 + (int)Math.sqrt(r/total + g/total + b/total);
+      return tile.mUseCount*15 + (int)Math.sqrt(r/total + g/total + b/total);
    }
    
    private BufferedImage prepareTile(Tile tile, int cellType) {
