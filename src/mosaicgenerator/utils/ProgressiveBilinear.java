@@ -9,7 +9,8 @@ public class ProgressiveBilinear {
    public static BufferedImage progressiveScale(BufferedImage image, 
          int width, int height) 
    {
-      if(width == image.getWidth() && height == image.getHeight()) {
+      if((width == image.getWidth() && height == image.getHeight()) 
+            || width > image.getWidth() || width > image.getHeight()) {
          return image;
       }
       

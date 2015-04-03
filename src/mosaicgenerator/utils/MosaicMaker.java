@@ -37,8 +37,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       mStatusReporter = statusReporter;
       mImage = image;
       mTiles = copyTiles(tiles);
-      mSubImageDimension = new Dimension(30, 30);
-      mTileDimension = new Dimension(100, 100);
+      mSubImageDimension = new Dimension(15, 15);
+      mTileDimension = new Dimension(150, 150);
    }
    
    private LinkedList<Tile> copyTiles(LinkedList<BufferedImage> tiles) {
@@ -180,10 +180,10 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       if(tile.mAvgPixel == null) {
          tile.mAvgPixel = calculateAvgPixel(tile.mScaled);
       }
-      return Math.abs(tile.mAvgPixel.r - avgPixel.r)
-           + Math.abs(tile.mAvgPixel.g - avgPixel.g)
-           + Math.abs(tile.mAvgPixel.b - avgPixel.b)
-           + tile.mUseCount*10;
+      int dr = tile.mAvgPixel.r - avgPixel.r;
+      int dg = tile.mAvgPixel.g - avgPixel.g;
+      int db = tile.mAvgPixel.b - avgPixel.b;
+      return tile.mUseCount*10 + (int)Math.sqrt(dr*dr + dg*dg + db*db);
    }
    
    private BufferedImage assembleImage(BufferedImage tiles[][]) {

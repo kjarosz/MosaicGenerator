@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import mosaicgenerator.utils.DirectoryLoader;
+import mosaicgenerator.utils.ProgressiveBilinear;
 
 public class ImageDirectory extends JButton implements MouseListener {
    private final Color DISABLED = Color.CYAN;
@@ -48,6 +49,7 @@ public class ImageDirectory extends JButton implements MouseListener {
    }
    
    public void addImage(String name, BufferedImage image) {
+      image = ProgressiveBilinear.progressiveScale(image, 150, 150);
       mImages.put(name, image);
       ImageThumbnail thumb = new ImageThumbnail(image);
       mThumbnails.add(thumb);

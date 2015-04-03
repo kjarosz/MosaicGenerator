@@ -132,8 +132,18 @@ public class MosaicGenerator extends JFrame {
    }
    
    private void addSettingsPage(JTabbedPane parent) {
-      SettingsPage settings = new SettingsPage();
+      ActionListener saveAction = makeSaveSettingAction();
+      SettingsPage settings = new SettingsPage(saveAction);
       parent.addTab("3. Settings", settings);
+   }
+   
+   private ActionListener makeSaveSettingAction() {
+      return new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            
+         }
+      };
    }
    
    private void addResultsPage(JTabbedPane parent) {
