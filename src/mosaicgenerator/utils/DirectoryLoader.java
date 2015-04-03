@@ -57,8 +57,6 @@ public class DirectoryLoader extends SwingWorker<ImageDirectory, String> {
          
          try {
             BufferedImage image = ImageIO.read(imageFile);
-            System.out.print(imageFile.getName());
-            System.out.println(" (" + image.getWidth() + "x" + image.getHeight() + ")");
             mImageDirectory.addImage(imageFile.getName(), image);
             updateProgress(++loaded, total);
          } catch(IOException ignore) {

@@ -1,21 +1,19 @@
 package mosaicgenerator.components;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
-import javax.swing.JButton;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 
-import mosaicgenerator.utils.ProgressiveBilinear;
-
-public class ImageThumbnail extends JButton {
+public class ImageThumbnail extends JLabel {
    private BufferedImage mImage;
    private BufferedImage mScaledImage;
    
    private Dimension mThumbnailSize;
    
    public ImageThumbnail(BufferedImage image) {
+      super(new ImageIcon(image));
       mImage = image;
       mScaledImage = null;
       mThumbnailSize = new Dimension(100, 100);
@@ -42,6 +40,7 @@ public class ImageThumbnail extends JButton {
       return mThumbnailSize;
    }
    
+   /*
    @Override
    public void paintComponent(Graphics g) {
       Color oldColor = g.getColor();
@@ -62,5 +61,5 @@ public class ImageThumbnail extends JButton {
          mScaledImage = ProgressiveBilinear.progressiveScale(
                      mImage, getWidth(), getHeight());
       }
-   }
+   } */
 }

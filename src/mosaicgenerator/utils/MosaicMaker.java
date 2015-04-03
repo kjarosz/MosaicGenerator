@@ -1,9 +1,11 @@
 package mosaicgenerator.utils;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,17 +13,11 @@ import javax.swing.SwingWorker;
 
 import mosaicgenerator.MainImagePanel;
 
-public class MosaicMaker extends SwingWorker<BufferedImage, String> {
-   private static class Pixel {
-      int r;
-      int g;
-      int b;
-   }
-   
+public class MosaicMaker extends SwingWorker<BufferedImage, String> {   
    private static class Tile {
       BufferedImage mOriginal;
       BufferedImage mScaled;
-      Pixel mAvgPixel;
+      BufferedImage mCellSized;
       int mUseCount;
    }
    
@@ -29,7 +25,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    private BufferedImage mImage;
    private LinkedList<Tile> mTiles;
    
-   private Dimension mSubImageDimension;
+   private Dimension mCellSize;
    private Dimension mTileDimension;
    
    public MosaicMaker(MainImagePanel statusReporter, BufferedImage image,
@@ -37,7 +33,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       mStatusReporter = statusReporter;
       mImage = image;
       mTiles = copyTiles(tiles);
-      mSubImageDimension = new Dimension(15, 15);
+      mCellSize = new Dimension(15, 15);
       mTileDimension = new Dimension(150, 150);
    }
    
@@ -48,7 +44,6 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
          tile.mOriginal = image;
          tile.mScaled = null;
          tile.mUseCount = 0;
-         tile.mAvgPixel = null;
          mTiles.add(tile);
       }
       return mTiles;
@@ -57,18 +52,23 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    @Override
    protected BufferedImage doInBackground() {
       BufferedImage[][] subImages = getSubImages();
-      if(isCancelled()) {
-         return null;
-      }
-      BufferedImage result = makeMosaic(subImages);
+      
+      if(isCancelled()) return null;
+      
+      BufferedImage tiles[][] = selectTiles(subImages);
+      
+      if(isCancelled()) return null;
+      
+      BufferedImage result = assembleImage(tiles);
+      
       return result;
    }
    
    private BufferedImage[][] getSubImages() {
       int cols = (int)(Math.ceil((double)mImage.getWidth()
-            /(double)mSubImageDimension.width));
+            /(double)mCellSize.width));
       int rows = (int)(Math.ceil((double)mImage.getHeight()
-            /(double)mSubImageDimension.height));
+            /(double)mCellSize.height));
       
       int processed = 0, total = rows*cols;
       
@@ -91,12 +91,12 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    }
    
    private BufferedImage getSubImage(int col, int row) {
-      int x = mSubImageDimension.width*col;
-      int y = mSubImageDimension.height*row;
-      int width = (mImage.getWidth() - x < mSubImageDimension.width) ?
-            mImage.getWidth() - x : mSubImageDimension.width;
-      int height = (mImage.getHeight() - y < mSubImageDimension.height) ?
-            mImage.getHeight() - x : mSubImageDimension.height;
+      int x = mCellSize.width*col;
+      int y = mCellSize.height*row;
+      int width = (mImage.getWidth() - x < mCellSize.width) ?
+            mImage.getWidth() - x : mCellSize.width;
+      int height = (mImage.getHeight() - y < mCellSize.height) ?
+            mImage.getHeight() - x : mCellSize.height;
       int type = mImage.getType();
       
       BufferedImage subImage = new BufferedImage(width, height, type);
@@ -108,16 +108,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       g2.dispose();
       return subImage;
    }
-   
-   private BufferedImage makeMosaic(BufferedImage subImages[][]) {
-      BufferedImage tiles[][] = selectTiles(subImages);
-      if(isCancelled()) {
-         return null;
-      }
-      BufferedImage result = assembleImage(tiles);
-      return result;
-   }
-   
+      
    private BufferedImage[][] selectTiles(BufferedImage subImages[][]) {
       int selected = 0, total = subImages.length*subImages[0].length;
       
@@ -129,7 +120,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
                return null;
             }
             selectedTiles[i][j] = selectTile(subImages[i][j]);
-            publishStatus(2, calculateProgress(selected, total));
+            publishStatus(2, calculateProgress(++selected, total));
          }
       }
       return selectedTiles;
@@ -138,9 +129,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    private BufferedImage selectTile(BufferedImage subImage) {
       int selectedMismatch = Integer.MAX_VALUE;
       Tile selectedTile = null;
-      Pixel avgPixel = calculateAvgPixel(subImage);
       for(Tile tile: mTiles) {
-         int mismatch = calculateMismatch(tile, avgPixel);
+         int mismatch = calculateMismatch(tile, subImage);
          if(mismatch < selectedMismatch) {
             selectedMismatch = mismatch;
             selectedTile = tile;
@@ -154,36 +144,65 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return selectedTile.mScaled;
    }
    
-   private Pixel calculateAvgPixel(BufferedImage img) {
-      Pixel px = new Pixel();
+   private int calculateMismatch(Tile tile, BufferedImage cell) {
+      BufferedImage cellSizedTile = prepareTile(tile, cell.getType());
       long r = 0, g = 0, b = 0;
-      for(int i = 0; i < img.getWidth(); i++) {
-         for(int j = 0; j < img.getHeight(); j++) {
-            Color pixel = new Color(img.getRGB(i, j));
-            r += pixel.getRed();
-            g += pixel.getGreen();
-            b += pixel.getBlue();
+      float total = mCellSize.width * mCellSize.height;
+      int dr, dg, db;
+      byte cellRaster[] = getData(cell);
+      byte tileRaster[] = getData(cellSizedTile);
+      if(cell.getAlphaRaster() != null) {
+         final int pixelLength = 4;
+         for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += pixelLength) {
+            dr = ((int)cellRaster[pxOffset+3] & 0xff) - ((int)tileRaster[pxOffset+3] & 0xff);
+            dg = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
+            db = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
+            
+            r += dr*dr;
+            g += dg*dg;
+            b += db*db;
+         }
+      } else {
+         final int pixelLength = 3;
+         for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += pixelLength) {
+            dr = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
+            dg = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
+            db = ((int)cellRaster[pxOffset] & 0xff) - ((int)tileRaster[pxOffset] & 0xff);
+            
+            r += dr*dr;
+            g += dg*dg;
+            b += db*db;
          }
       }
-      int pixelCount = img.getWidth()*img.getHeight();
-      px.r = (int)(r/pixelCount);
-      px.g = (int)(g/pixelCount);
-      px.b = (int)(b/pixelCount);
-      return px;
+      
+      return tile.mUseCount*10 + (int)Math.sqrt(r/total + g/total + b/total);
    }
    
-   private int calculateMismatch(Tile tile, Pixel avgPixel) {
+   private BufferedImage prepareTile(Tile tile, int cellType) {
       if (tile.mScaled == null) {
          tile.mScaled = ProgressiveBilinear.progressiveScale(
                tile.mOriginal, mTileDimension.width, mTileDimension.height);
       }
-      if(tile.mAvgPixel == null) {
-         tile.mAvgPixel = calculateAvgPixel(tile.mScaled);
+      if (tile.mCellSized == null) {
+         tile.mCellSized = new BufferedImage(
+               mCellSize.width, 
+               mCellSize.height, 
+               cellType);
+         Graphics2D g2 = tile.mCellSized.createGraphics();
+         g2.drawImage(tile.mScaled, 0, 0, 
+               tile.mCellSized.getWidth(), 
+               tile.mCellSized.getHeight(), 
+               null);
+         g2.dispose();
       }
-      int dr = tile.mAvgPixel.r - avgPixel.r;
-      int dg = tile.mAvgPixel.g - avgPixel.g;
-      int db = tile.mAvgPixel.b - avgPixel.b;
-      return tile.mUseCount*10 + (int)Math.sqrt(dr*dr + dg*dg + db*db);
+      return tile.mCellSized;
+   }
+   
+   private byte[] getData(BufferedImage img) {
+      Raster rasta = img.getData();
+      DataBuffer buff = rasta.getDataBuffer();
+      DataBufferByte byteBuff = (DataBufferByte)buff;
+      return byteBuff.getData();
    }
    
    private BufferedImage assembleImage(BufferedImage tiles[][]) {

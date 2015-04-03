@@ -3,6 +3,8 @@ package mosaicgenerator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
@@ -13,6 +15,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -25,6 +28,7 @@ public class ImageFolders extends JSplitPane {
    private JPanel mImagePanel;
    private JPanel mDirectoryList;
    private LinkedList<ImageDirectory> mDirectoryButtons;
+   private JLabel mImageCount;
    
    public ImageFolders() {
       super(JSplitPane.HORIZONTAL_SPLIT);
@@ -36,12 +40,31 @@ public class ImageFolders extends JSplitPane {
    
    private JScrollPane createFolderView() {
       mImagePanel = new JPanel(new ModifiedFlowLayout());
+      mImagePanel.addContainerListener(createContainerListener());
       JScrollPane scroller = new JScrollPane(mImagePanel);
       scroller.setHorizontalScrollBarPolicy(
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scroller.setVerticalScrollBarPolicy(
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       return scroller;
+   }
+   
+   private ContainerListener createContainerListener() {
+      return new ContainerListener() {
+         @Override
+         public void componentAdded(ContainerEvent arg0) {
+            updateImageCount();
+         }
+         @Override
+         public void componentRemoved(ContainerEvent arg0) {
+            updateImageCount();
+         }
+      };
+   }
+   
+   private void updateImageCount() {
+      int count = mImagePanel.getComponentCount();
+      mImageCount.setText("Images loaded: " + count);
    }
    
    private JPanel createFolderLoader() {
@@ -60,6 +83,8 @@ public class ImageFolders extends JSplitPane {
    
    private void createFolderControl(JPanel parent) {
       JPanel buttonPanel = new JPanel();
+      mImageCount = new JLabel("Image Count: 0");
+      buttonPanel.add(mImageCount);
       createAddButton(buttonPanel);
       createRemoveButton(buttonPanel);
       parent.add(buttonPanel, BorderLayout.SOUTH);
@@ -79,6 +104,7 @@ public class ImageFolders extends JSplitPane {
          public void actionPerformed(ActionEvent e) {
             JFileChooser chooser = new JFileChooser();
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(true);
             int result = chooser.showOpenDialog(me);
             createDirectoryButton(result, chooser);
          }
@@ -90,12 +116,14 @@ public class ImageFolders extends JSplitPane {
          return;
       }
       
-      File dir = chooser.getSelectedFile();
-      if(dir.exists() && dir.isDirectory() && dirIsNotUsed(dir)) {
-         ImageDirectory imgDir = new ImageDirectory(mImagePanel);
-         mDirectoryList.add(imgDir);
-         mDirectoryButtons.add(imgDir);
-         imgDir.loadImages(dir);
+      File dirs[] = chooser.getSelectedFiles();
+      for(File dir: dirs) {
+         if(dir.exists() && dir.isDirectory() && dirIsNotUsed(dir)) {
+            ImageDirectory imgDir = new ImageDirectory(mImagePanel);
+            mDirectoryList.add(imgDir);
+            mDirectoryButtons.add(imgDir);
+            imgDir.loadImages(dir);
+         }
       }
    }
    
