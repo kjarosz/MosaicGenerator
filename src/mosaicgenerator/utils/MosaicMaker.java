@@ -140,45 +140,55 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
             }
          }
       }
+      
       selectedTile.mUseCount++;
       return selectedTile.mScaled;
    }
    
    private int calculateMismatch(Tile tile, BufferedImage cell) {
-      BufferedImage cellSizedTile = prepareTile(tile, cell.getType());
-      long r = 0, g = 0, b = 0;
-      float total = mCellSize.width * mCellSize.height;
-      int dr, dg, db;
+      prepareTile(tile, cell.getType());
       byte cellRaster[] = getData(cell);
-      byte tileRaster[] = getData(cellSizedTile);
+      byte tileRaster[] = getData(tile.mCellSized);
+      int difference = 0;
       if(cell.getAlphaRaster() != null) {
-         final int pixelLength = 4;
-         for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += pixelLength) {
-            dr = ((int)cellRaster[pxOffset+3] & 0xff) - ((int)tileRaster[pxOffset+3] & 0xff);
-            dg = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
-            db = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
-            
-            r += dr*dr;
-            g += dg*dg;
-            b += db*db;
-         }
+         difference = normalizeAlphaPixelDiff(cellRaster, tileRaster);
       } else {
-         final int pixelLength = 3;
-         for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += pixelLength) {
-            dr = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
-            dg = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
-            db = ((int)cellRaster[pxOffset] & 0xff) - ((int)tileRaster[pxOffset] & 0xff);
-            
-            r += dr*dr;
-            g += dg*dg;
-            b += db*db;
-         }
+         difference = normalizePixelDiff(cellRaster, tileRaster);
       }
-      
-      return tile.mUseCount*15 + (int)Math.sqrt(r/total + g/total + b/total);
+      return difference + tile.mUseCount*15;
    }
    
-   private BufferedImage prepareTile(Tile tile, int cellType) {
+   private int normalizeAlphaPixelDiff(byte cellRaster[], byte tileRaster[]) {
+      long r = 0, g = 0, b = 0;
+      float total = mCellSize.width * mCellSize.height;
+      for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += 4) {
+         int dr = ((int)cellRaster[pxOffset+3] & 0xff) - ((int)tileRaster[pxOffset+3] & 0xff);
+         int dg = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
+         int db = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
+         
+         r += dr*dr;
+         g += dg*dg;
+         b += db*db;
+      }
+      return (int)Math.sqrt(r/total + g/total + b/total);
+   }
+   
+   private int normalizePixelDiff(byte cellRaster[], byte tileRaster[]) {
+      long r = 0, g = 0, b = 0;
+      float total = mCellSize.width * mCellSize.height;
+      for(int pxOffset = 0; pxOffset < cellRaster.length; pxOffset += 3) {
+         int dr = ((int)cellRaster[pxOffset+2] & 0xff) - ((int)tileRaster[pxOffset+2] & 0xff);
+         int dg = ((int)cellRaster[pxOffset+1] & 0xff) - ((int)tileRaster[pxOffset+1] & 0xff);
+         int db = ((int)cellRaster[pxOffset] & 0xff) - ((int)tileRaster[pxOffset] & 0xff);
+         
+         r += dr*dr;
+         g += dg*dg;
+         b += db*db;
+      }
+      return (int)Math.sqrt(r/total + g/total + b/total);
+   }
+   
+   private void prepareTile(Tile tile, int cellType) {
       if (tile.mScaled == null) {
          tile.mScaled = ProgressiveBilinear.progressiveScale(
                tile.mOriginal, mTileDimension.width, mTileDimension.height);
@@ -195,7 +205,6 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
                null);
          g2.dispose();
       }
-      return tile.mCellSized;
    }
    
    private byte[] getData(BufferedImage img) {
