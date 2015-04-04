@@ -1,5 +1,45 @@
 package mosaicgenerator.utils;
 
+/* ************************************************************************* *
+ *                                Mosaic Maker                               *
+ * ************************************************************************* *
+ *                                                                           *
+ * Description:                                                              *
+ *                                                                           *
+ * The following algorithm converts an input image into a mosaic of out of   *
+ * smaller sub images. There are three general steps to accomplish this:     *
+ *                                                                           *
+ *  1. Divide original image.                                                *
+ *                                                                           *
+ *    In this step, the algorithm takes the input image and divides it into  *
+ * cells that will then be replaced with the tiles (provided in the          *
+ * constructor). The cells do not have to be the same size as the tiles, but *
+ * the correspondence between cell and tile will be 1-to-1, which means each *
+ * cell will be replaced by exactly one tile (repeating or not).             *
+ *                                                                           *
+ * 2. Select matching tiles.                                                 *
+ *                                                                           *
+ *    Now the algorithm will go through each cell and compare it to all the  *
+ * input tiles. First, if the cell is a different size than the tiles, then  *
+ * the tiles will be scaled to the size of the cell (this will happen only   *
+ * once and the scaled versions will be saved until the algorithm runs,      *
+ * since all the cells are the same size). Then the cells will be compared   *
+ * with each tile pixel-by-pixel using the manhattan distance. The           *
+ * calculated difference between each cell and tile is (I think at least)    *
+ * the root-mean-square value of each manhattan distance vector. If a tile   *
+ * has been used multiple times, then the mismatch value will be penalized   *
+ * by 15 for each time the tile has been used. All the selected tiles will   *
+ * be returned in an array (again, 1-to-1 mapping to the cells from the      *
+ * original image).                                                          *
+ *                                                                           *
+ * 3. Draw the image.                                                        *
+ *                                                                           *
+ *    This is fairly straight forward. The algorithm just takes all the      *
+ * tiles and pieces them into one big image. Be wary of the size. The        *
+ * resulting image can be quite large.                                       *
+ *                                                                           *
+ * ************************************************************************* */
+
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -33,6 +73,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
     * 
     * @param statusReporter Object that contains the element which
     *                       reports the progress status of the algorithm.
+    * @param image          Image that will be turned to a mosaic.
+    * @param tiles          Images to be used as tiles in creating the mosaic.
     */
    public MosaicMaker(MainImagePanel statusReporter, BufferedImage image,
             LinkedList<BufferedImage> tiles) {
@@ -57,7 +99,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    
    @Override
    protected BufferedImage doInBackground() {
-      BufferedImage[][] subImages = getSubImages();
+      BufferedImage[][] subImages = getCells();
       
       if(isCancelled()) return null;
       
@@ -70,7 +112,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return result;
    }
    
-   private BufferedImage[][] getSubImages() {
+   private BufferedImage[][] getCells() {
       int cols = (int)(Math.ceil((double)mImage.getWidth()
             /(double)mCellSize.width));
       int rows = (int)(Math.ceil((double)mImage.getHeight()
@@ -78,25 +120,25 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       
       int processed = 0, total = rows*cols;
       
-      BufferedImage subImages[][] = new BufferedImage[cols][];
-      for(int i = 0; i < subImages.length; i++) {
+      BufferedImage cells[][] = new BufferedImage[cols][];
+      for(int i = 0; i < cells.length; i++) {
          
-         subImages[i] = new BufferedImage[rows];
-         for(int j = 0; j < subImages[i].length; j++) {
+         cells[i] = new BufferedImage[rows];
+         for(int j = 0; j < cells[i].length; j++) {
             if(isCancelled()) {
                return null;
             }
             
-            subImages[i][j] = getSubImage(i, j);
+            cells[i][j] = getCell(i, j);
             
             publishStatus(1, calculateProgress(++processed, total));
          }
       }
       
-      return subImages;
+      return cells;
    }
    
-   private BufferedImage getSubImage(int col, int row) {
+   private BufferedImage getCell(int col, int row) {
       int x = mCellSize.width*col;
       int y = mCellSize.height*row;
       int width = (mImage.getWidth() - x < mCellSize.width) ?
@@ -105,14 +147,14 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
             mImage.getHeight() - x : mCellSize.height;
       int type = mImage.getType();
       
-      BufferedImage subImage = new BufferedImage(width, height, type);
-      Graphics2D g2 = subImage.createGraphics();
+      BufferedImage cell = new BufferedImage(width, height, type);
+      Graphics2D g2 = cell.createGraphics();
       g2.drawImage(mImage, 
             0, 0, width, height,
             x, y, x + width, y + height,
             null);
       g2.dispose();
-      return subImage;
+      return cell;
    }
       
    private BufferedImage[][] selectTiles(BufferedImage subImages[][]) {
@@ -164,6 +206,32 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return difference + tile.mUseCount*15;
    }
    
+   private void prepareTile(Tile tile, int cellType) {
+      if (tile.mScaled == null) {
+         tile.mScaled = ProgressiveBilinear.progressiveScale(
+               tile.mOriginal, mTileDimension.width, mTileDimension.height);
+      }
+      if (tile.mCellSized == null) {
+         tile.mCellSized = new BufferedImage(
+               mCellSize.width, 
+               mCellSize.height, 
+               cellType);
+         Graphics2D g2 = tile.mCellSized.createGraphics();
+         g2.drawImage(tile.mScaled, 0, 0, 
+               tile.mCellSized.getWidth(), 
+               tile.mCellSized.getHeight(), 
+               null);
+         g2.dispose();
+      }
+   }
+   
+   private byte[] getData(BufferedImage img) {
+      Raster rasta = img.getData();
+      DataBuffer buff = rasta.getDataBuffer();
+      DataBufferByte byteBuff = (DataBufferByte)buff;
+      return byteBuff.getData();
+   }
+   
    private int normalizeAlphaPixelDiff(byte cellRaster[], byte tileRaster[]) {
       long r = 0, g = 0, b = 0;
       float total = mCellSize.width * mCellSize.height;
@@ -192,32 +260,6 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
          b += db*db;
       }
       return (int)Math.sqrt(r/total + g/total + b/total);
-   }
-   
-   private void prepareTile(Tile tile, int cellType) {
-      if (tile.mScaled == null) {
-         tile.mScaled = ProgressiveBilinear.progressiveScale(
-               tile.mOriginal, mTileDimension.width, mTileDimension.height);
-      }
-      if (tile.mCellSized == null) {
-         tile.mCellSized = new BufferedImage(
-               mCellSize.width, 
-               mCellSize.height, 
-               cellType);
-         Graphics2D g2 = tile.mCellSized.createGraphics();
-         g2.drawImage(tile.mScaled, 0, 0, 
-               tile.mCellSized.getWidth(), 
-               tile.mCellSized.getHeight(), 
-               null);
-         g2.dispose();
-      }
-   }
-   
-   private byte[] getData(BufferedImage img) {
-      Raster rasta = img.getData();
-      DataBuffer buff = rasta.getDataBuffer();
-      DataBufferByte byteBuff = (DataBufferByte)buff;
-      return byteBuff.getData();
    }
    
    private BufferedImage assembleImage(BufferedImage tiles[][]) {
