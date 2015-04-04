@@ -104,7 +104,6 @@ public class MosaicGenerator extends JFrame {
                return;
             }
             
-            
             if(mMosaicMaker.isCancelled()) {
                mMosaicMaker = null;
             } else {

@@ -320,6 +320,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    @Override
    protected void process(List<String> messages) {
       if(!messages.isEmpty()) {
+         if(isCancelled()) return;
+         
          String message = messages.get(messages.size()-1);
          mStatusReporter.setStatus(false, message);
       }
