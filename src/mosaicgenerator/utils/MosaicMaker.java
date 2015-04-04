@@ -28,6 +28,12 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    private Dimension mCellSize;
    private Dimension mTileDimension;
    
+   /**
+    * Prepares the worker thread by setting up the initial state.
+    * 
+    * @param statusReporter Object that contains the element which
+    *                       reports the progress status of the algorithm.
+    */
    public MosaicMaker(MainImagePanel statusReporter, BufferedImage image,
             LinkedList<BufferedImage> tiles) {
       mStatusReporter = statusReporter;
