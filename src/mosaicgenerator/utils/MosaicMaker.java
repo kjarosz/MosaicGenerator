@@ -112,6 +112,9 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return result;
    }
    
+   /* *********************************************************************** *
+    * Step 1 - Divide image into cells.                                       *
+    * *********************************************************************** */
    private BufferedImage[][] getCells() {
       int cols = (int)(Math.ceil((double)mImage.getWidth()
             /(double)mCellSize.width));
@@ -156,7 +159,10 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       g2.dispose();
       return cell;
    }
-      
+   
+   /* *********************************************************************** *
+    * Step 2 - Get matching tiles for each cell.                              *
+    * *********************************************************************** */
    private BufferedImage[][] selectTiles(BufferedImage subImages[][]) {
       int selected = 0, total = subImages.length*subImages[0].length;
       
@@ -262,6 +268,9 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return (int)Math.sqrt(r/total + g/total + b/total);
    }
    
+   /* *********************************************************************** *
+    * Step 3 - Assemble tiles into final image.                               *
+    * *********************************************************************** */
    private BufferedImage assembleImage(BufferedImage tiles[][]) {
       BufferedImage image = createMatchingImage(tiles);
       drawToImage(image, tiles);
