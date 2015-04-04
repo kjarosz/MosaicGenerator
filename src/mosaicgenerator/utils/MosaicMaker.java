@@ -67,6 +67,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    
    private Dimension mCellSize;
    private Dimension mTileDimension;
+   private int mReusePenalty;
    
    /**
     * Prepares the worker thread by setting up the initial state.
@@ -77,12 +78,13 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
     * @param tiles          Images to be used as tiles in creating the mosaic.
     */
    public MosaicMaker(MainImagePanel statusReporter, BufferedImage image,
-            LinkedList<BufferedImage> tiles) {
+            LinkedList<BufferedImage> tiles, Settings settings) {
       mStatusReporter = statusReporter;
       mImage = image;
       mTiles = copyTiles(tiles);
-      mCellSize = new Dimension(15, 15);
-      mTileDimension = new Dimension(150, 150);
+      mCellSize = new Dimension(settings.cellWidth, settings.cellHeight);
+      mTileDimension = new Dimension(settings.tileWidth, settings.tileHeight);
+      mReusePenalty = settings.reusePenalty;
    }
    
    private LinkedList<Tile> copyTiles(LinkedList<BufferedImage> tiles) {
@@ -209,7 +211,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       } else {
          difference = normalizePixelDiff(cellRaster, tileRaster);
       }
-      return difference + tile.mUseCount*15;
+      return difference + tile.mUseCount*mReusePenalty;
    }
    
    private void prepareTile(Tile tile, int cellType) {

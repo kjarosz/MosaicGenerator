@@ -14,24 +14,36 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import mosaicgenerator.utils.MosaicMaker;
+import mosaicgenerator.utils.Settings;
 
 public class MosaicGenerator extends JFrame {
    private JTabbedPane mTabbedPane;   
    private MainImagePanel mImagePanel;
    private ImageFolders mFoldersPanel;
+   private SettingsPage mSettingsPanel;
    private ResultsPage mResultsPage;    
    
+   private Settings mSettings;
    private MosaicMaker mMosaicMaker;
    
    public MosaicGenerator() {
       super("Mosaic Generator");
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
+      mSettings = makeDefaultSettings();
       createWidgets();
       
       setSize(800, 600);
       setVisible(true);
-      
+   }
+   
+   private Settings makeDefaultSettings() {
+      Settings settings = new Settings();
+      settings.cellWidth = settings.cellHeight = 15;
+      settings.tileWidth = settings.tileHeight = 150;
+      settings.reuseTiles = false;
+      settings.reusePenalty = 15;
+      return settings;
    }
    
    private void createWidgets() {
@@ -85,7 +97,7 @@ public class MosaicGenerator extends JFrame {
    
    private void makeMosaic(BufferedImage image, 
                            LinkedList<BufferedImage> images) {
-      mMosaicMaker = new MosaicMaker(mImagePanel, image, images);
+      mMosaicMaker = new MosaicMaker(mImagePanel, image, images, mSettings);
       mMosaicMaker.addPropertyChangeListener(createGeneratorListener());
       mMosaicMaker.execute();
    }
@@ -132,17 +144,29 @@ public class MosaicGenerator extends JFrame {
    
    private void addSettingsPage(JTabbedPane parent) {
       ActionListener saveAction = makeSaveSettingAction();
-      SettingsPage settings = new SettingsPage(saveAction);
-      parent.addTab("3. Settings", settings);
+      mSettingsPanel = new SettingsPage(saveAction);
+      parent.addTab("3. Settings", mSettingsPanel);
    }
    
    private ActionListener makeSaveSettingAction() {
       return new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            
+            try {
+               Settings settings = mSettingsPanel.getSettings();
+               applySettings(settings);
+            } catch(RuntimeException ignore) {}
          }
       };
+   }
+   
+   private void applySettings(Settings settings) {
+      mSettings.cellWidth = settings.cellWidth;
+      mSettings.cellHeight = settings.cellHeight;
+      mSettings.tileWidth = settings.cellWidth;
+      mSettings.tileHeight = settings.cellHeight;
+      mSettings.reuseTiles = settings.reuseTiles;
+      mSettings.reusePenalty = settings.reusePenalty;
    }
    
    private void addResultsPage(JTabbedPane parent) {
