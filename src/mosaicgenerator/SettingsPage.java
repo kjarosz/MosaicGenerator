@@ -128,7 +128,7 @@ public class SettingsPage extends JPanel {
       try {
          String input = field.getText();
          int value = Integer.parseInt(input);
-         if(value > 0) throw new NumberFormatException();
+         if(value <= 0) throw new NumberFormatException();
          return value;
       } catch(NumberFormatException ex) {
          JOptionPane.showMessageDialog(
