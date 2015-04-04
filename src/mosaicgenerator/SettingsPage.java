@@ -10,10 +10,13 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
+
+import mosaicgenerator.utils.Settings;
 
 public class SettingsPage extends JPanel {
    private final String DEFAULT_CELL_WIDTH = "15";
@@ -88,6 +91,7 @@ public class SettingsPage extends JPanel {
    
    private void createApplyPanel(ActionListener saveListener) {
       JPanel panel = new JPanel();
+      
       JButton saveButton = new JButton("Save");
       saveButton.addActionListener(saveListener);
       panel.add(saveButton);
@@ -109,5 +113,30 @@ public class SettingsPage extends JPanel {
            mTileWidth.setText(DEFAULT_TILE_HEIGHT);
         }
       };
+   }
+   
+   public Settings getSettings() throws RuntimeException {
+      Settings settings = new Settings();
+      settings.cellWidth = getInt(mCellWidth);
+      settings.cellHeight = getInt(mCellHeight);
+      settings.tileWidth = getInt(mTileWidth);
+      settings.tileHeight = getInt(mTileHeight);
+      return settings;
+   }
+   
+   private int getInt(JTextField field) {
+      try {
+         String input = field.getText();
+         int value = Integer.parseInt(input);
+         if(value > 0) throw new NumberFormatException();
+         return value;
+      } catch(NumberFormatException ex) {
+         JOptionPane.showMessageDialog(
+               this,
+               "Make sure all the dimensions are greater than 0.",
+               "Number Format Error.",
+               JOptionPane.ERROR_MESSAGE);
+         throw new RuntimeException("Dimensions invalid.");
+      }
    }
 }
