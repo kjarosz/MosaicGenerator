@@ -1,7 +1,6 @@
 package mosaicgenerator;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -38,7 +37,6 @@ public class MainImagePanel extends JPanel {
    private void createScrollPaneButton() {
       mImageButton = new ImageButton();
       mScrollPane = new JScrollPane(mImageButton);
-      mScrollPane.setPreferredSize(new Dimension(400, 300));
       add(mScrollPane, BorderLayout.CENTER);
    }
    
