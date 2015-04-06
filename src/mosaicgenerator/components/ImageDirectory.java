@@ -108,6 +108,10 @@ public class ImageDirectory extends JButton implements MouseListener {
       return new Dimension(100, 50);
    }
    
+   public Dimension getPreferredSize() {
+      return new Dimension(0, 50);
+   }
+   
    public Dimension getMaximumSize() {
       return new Dimension(Integer.MAX_VALUE, 50);
    }
