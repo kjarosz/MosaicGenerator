@@ -8,16 +8,17 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 
 import mosaicgenerator.utils.Settings;
+import net.miginfocom.swing.MigLayout;
 
 public class SettingsPage extends JPanel {
    private final String DEFAULT_CELL_WIDTH = "15";
@@ -34,7 +35,7 @@ public class SettingsPage extends JPanel {
    private JTextField mTileWidth;
    private JTextField mTileHeight;
    
-   private JRadioButton mReuseTiles;
+   private JCheckBox mReuseTiles;
    private JTextField mReusePenalty;
    
    public SettingsPage(ActionListener saveListener) {
@@ -48,8 +49,7 @@ public class SettingsPage extends JPanel {
    }
    
    private void createCenterPanel() {
-      JPanel centerPane = new JPanel();
-      centerPane.setLayout(new BoxLayout(centerPane, BoxLayout.Y_AXIS));
+      JPanel centerPane = new JPanel(new MigLayout());
       createCellSizePanel(centerPane);
       createTileSizePanel(centerPane);
       createTileReusePanel(centerPane);
@@ -67,8 +67,8 @@ public class SettingsPage extends JPanel {
    
    private JPanel makeSectionPanel(String title) {
       JPanel panel = new JPanel();
-      panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+      panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       panel.setBorder(makeBorder(title));
       return panel;
    }
@@ -104,7 +104,7 @@ public class SettingsPage extends JPanel {
    
    private void createTileReusePanel(JPanel parent) {
       JPanel panel = makeSectionPanel("Reuse Tiles");
-      mReuseTiles = new JRadioButton("Reuse Tiles", true);
+      mReuseTiles = new JCheckBox("Reuse Tiles", true);
       mReusePenalty = new JTextField(DEFAULT_REUSE_PENALTY, 4);
       panel.add(mReuseTiles);
       panel.add(new JLabel("Reuse Penalty"));
