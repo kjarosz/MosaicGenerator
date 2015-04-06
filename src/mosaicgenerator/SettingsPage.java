@@ -146,6 +146,8 @@ public class SettingsPage extends JPanel {
       settings.cellHeight = getInt(mCellHeight);
       settings.tileWidth = getInt(mTileWidth);
       settings.tileHeight = getInt(mTileHeight);
+      settings.reuseTiles = true;
+      settings.reusePenalty = getInt(mReusePenalty);
       return settings;
    }
    
