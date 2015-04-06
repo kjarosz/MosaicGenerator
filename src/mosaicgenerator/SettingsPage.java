@@ -1,17 +1,18 @@
 package mosaicgenerator;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
@@ -22,8 +23,10 @@ public class SettingsPage extends JPanel {
    private final String DEFAULT_CELL_WIDTH = "15";
    private final String DEFAULT_CELL_HEIGHT = "15";
    
-   private final String DEFAULT_TILE_WIDTH = "100";
-   private final String DEFAULT_TILE_HEIGHT = "100";
+   private final String DEFAULT_TILE_WIDTH = "150";
+   private final String DEFAULT_TILE_HEIGHT = "150";
+   
+   private final String DEFAULT_REUSE_PENALTY = "15";
    
    private JTextField mCellWidth;
    private JTextField mCellHeight;
@@ -31,31 +34,41 @@ public class SettingsPage extends JPanel {
    private JTextField mTileWidth;
    private JTextField mTileHeight;
    
+   private JRadioButton mReuseTiles;
+   private JTextField mReusePenalty;
+   
    public SettingsPage(ActionListener saveListener) {
       createWidgets(saveListener);
    }
    
    private void createWidgets(ActionListener saveListener) {
-      setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-      createCellSizePanel();
-      createTileSizePanel();
-      add(Box.createVerticalGlue());
+      setLayout(new BorderLayout());
+      createCenterPanel();
       createApplyPanel(saveListener);
    }
    
-   private void createCellSizePanel() {
+   private void createCenterPanel() {
+      JPanel centerPane = new JPanel();
+      centerPane.setLayout(new BoxLayout(centerPane, BoxLayout.Y_AXIS));
+      createCellSizePanel(centerPane);
+      createTileSizePanel(centerPane);
+      createTileReusePanel(centerPane);
+      add(centerPane, BorderLayout.CENTER);
+   }
+   
+   private void createCellSizePanel(JPanel parent) {
       JPanel panel = makeSectionPanel("Cell Dimensions");
       mCellWidth = new JTextField(DEFAULT_CELL_WIDTH, 4);
       mCellHeight = new JTextField(DEFAULT_CELL_HEIGHT, 4);
       addToPanel("Cell Width", mCellWidth, panel);
       addToPanel("Cell Height", mCellHeight, panel);
-      add(panel);
+      parent.add(panel);
    }
    
    private JPanel makeSectionPanel(String title) {
       JPanel panel = new JPanel();
       panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
       panel.setBorder(makeBorder(title));
       return panel;
    }
@@ -80,13 +93,23 @@ public class SettingsPage extends JPanel {
       panel.add(container);
    }
    
-   private void createTileSizePanel() {
+   private void createTileSizePanel(JPanel parent) {
       JPanel panel = makeSectionPanel("Tile Dimensions");
       mTileWidth = new JTextField(DEFAULT_TILE_WIDTH, 4);
       mTileHeight = new JTextField(DEFAULT_TILE_HEIGHT, 4);
       addToPanel("Tile Width", mTileWidth, panel);
       addToPanel("Tile Height", mTileHeight, panel);
-      add(panel);
+      parent.add(panel);
+   }
+   
+   private void createTileReusePanel(JPanel parent) {
+      JPanel panel = makeSectionPanel("Reuse Tiles");
+      mReuseTiles = new JRadioButton("Reuse Tiles", true);
+      mReusePenalty = new JTextField(DEFAULT_REUSE_PENALTY, 4);
+      panel.add(mReuseTiles);
+      panel.add(new JLabel("Reuse Penalty"));
+      panel.add(mReusePenalty);
+      parent.add(panel);
    }
    
    private void createApplyPanel(ActionListener saveListener) {
@@ -100,7 +123,7 @@ public class SettingsPage extends JPanel {
       resetButton.addActionListener(createResetListener());
       panel.add(resetButton);
       
-      add(panel);
+      add(panel, BorderLayout.SOUTH);
    }
    
    private ActionListener createResetListener() {
@@ -111,6 +134,8 @@ public class SettingsPage extends JPanel {
            mCellHeight.setText(DEFAULT_CELL_HEIGHT);
            mTileWidth.setText(DEFAULT_TILE_WIDTH);
            mTileWidth.setText(DEFAULT_TILE_HEIGHT);
+           mReuseTiles.setSelected(true);
+           mReusePenalty.setText(DEFAULT_REUSE_PENALTY);
         }
       };
    }
