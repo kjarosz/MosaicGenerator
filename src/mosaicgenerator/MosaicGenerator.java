@@ -163,8 +163,8 @@ public class MosaicGenerator extends JFrame {
    private void applySettings(Settings settings) {
       mSettings.cellWidth = settings.cellWidth;
       mSettings.cellHeight = settings.cellHeight;
-      mSettings.tileWidth = settings.cellWidth;
-      mSettings.tileHeight = settings.cellHeight;
+      mSettings.tileWidth = settings.tileWidth;
+      mSettings.tileHeight = settings.tileHeight;
       mSettings.reuseTiles = settings.reuseTiles;
       mSettings.reusePenalty = settings.reusePenalty;
    }
