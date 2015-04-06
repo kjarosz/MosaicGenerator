@@ -5,20 +5,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 
 import mosaicgenerator.components.ImageButton;
+import mosaicgenerator.utils.ImageSaver;
 
 public class ResultsPage extends JPanel {
    private ImageButton mResultButton;
    private JScrollPane mScrollPane;
+   
+   private JProgressBar mProgressBar;
    
    public ResultsPage() {
       createWidgets();
@@ -43,11 +45,24 @@ public class ResultsPage extends JPanel {
    }
    
    private void createSavePanel() {
+      JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+      addProgressBar(buttonPanel);
+      addSaveButton(buttonPanel);
+      add(buttonPanel, BorderLayout.SOUTH);
+   }
+
+   private void addProgressBar(JPanel savePanel) {
+      mProgressBar = new JProgressBar();
+      mProgressBar.setMinimum(0);
+      mProgressBar.setMaximum(100);
+      savePanel.add(mProgressBar);
+   }
+   
+   private void addSaveButton(JPanel savePanel) {
       JButton button = new JButton("Save Image");
       button.addActionListener(createSaveAction());
-      JPanel buttonPanel = new JPanel();
-      buttonPanel.add(button);
-      add(buttonPanel, BorderLayout.SOUTH);
+      savePanel.add(button);
    }
    
    private ActionListener createSaveAction() {
@@ -70,14 +85,9 @@ public class ResultsPage extends JPanel {
       }
       
       File selectedFile = chooser.getSelectedFile();
-      try {
-         ImageIO.write(mResultButton.getImage(), "png", selectedFile);
-      } catch(IOException ex) {
-         JOptionPane.showMessageDialog(
-               this,
-               "Could not save file.\n\n" + ex.getMessage(),
-               "Error saving file.",
-               JOptionPane.ERROR_MESSAGE);
-      }
+      ImageSaver save = new ImageSaver(mProgressBar, 
+                                       mResultButton.getImage(), 
+                                       selectedFile);
+      save.execute();
    }
 }
