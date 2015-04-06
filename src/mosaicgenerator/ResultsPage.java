@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 
 import javax.swing.BoxLayout;
@@ -21,6 +23,7 @@ public class ResultsPage extends JPanel {
    private JScrollPane mScrollPane;
    
    private JProgressBar mProgressBar;
+   private ImageSaver mImageSaver;
    
    public ResultsPage() {
       createWidgets();
@@ -61,33 +64,71 @@ public class ResultsPage extends JPanel {
    
    private void addSaveButton(JPanel savePanel) {
       JButton button = new JButton("Save Image");
-      button.addActionListener(createSaveAction());
+      button.addActionListener(createSaveAction(button));
       savePanel.add(button);
    }
    
-   private ActionListener createSaveAction() {
+   private ActionListener createSaveAction(final JButton saveButton) {
       JPanel me = this;
       return new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if(mResultButton != null) {
-               JFileChooser chooser = new JFileChooser();
-               int result = chooser.showSaveDialog(me);
-               saveImage(result, chooser);
+            if(isSavingFile()) {
+               mImageSaver.cancel(true);
+               saveButton.setText("Save Image");
+            } else {
+               if(mResultButton != null) {
+                  JFileChooser chooser = new JFileChooser();
+                  int result = chooser.showSaveDialog(me);
+                  saveImage(result, chooser, saveButton);
+                  saveButton.setText("Stop Saving");
+               }
             }
          }
       };
    }
    
-   private void saveImage(int result, JFileChooser chooser) {
+   private boolean isSavingFile() {
+      if(mImageSaver == null)
+         return false;
+      
+      if(mImageSaver.isCancelled() || mImageSaver.isDone()) {
+         mImageSaver = null;
+         return false;
+      }
+      
+      return true;
+   }
+   
+   private void saveImage(int result, JFileChooser chooser, JButton saveButton) {
       if(result != JFileChooser.APPROVE_OPTION) {
          return;
       }
       
       File selectedFile = chooser.getSelectedFile();
-      ImageSaver save = new ImageSaver(mProgressBar, 
-                                       mResultButton.getImage(), 
-                                       selectedFile);
-      save.execute();
+      mImageSaver = new ImageSaver(mProgressBar, 
+                                   mResultButton.getImage(), 
+                                   selectedFile);
+      mImageSaver.addPropertyChangeListener(
+            getPropertyChangeListener(saveButton));
+      mImageSaver.execute();
+   }
+   
+   private PropertyChangeListener getPropertyChangeListener(final JButton saveButton) {
+      return new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent e) {
+            String property = e.getPropertyName();
+            if("state".equals(property))
+            {
+               ImageSaver saver = (ImageSaver)e.getSource();
+               if(saver.isCancelled() || saver.isDone())
+               {
+                  mImageSaver = null;
+                  saveButton.setText("Save Image");
+               }
+            }
+         }
+      };
    }
 }

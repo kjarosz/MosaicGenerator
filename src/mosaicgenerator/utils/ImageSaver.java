@@ -1,57 +1,77 @@
 package mosaicgenerator.utils;
 
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 import javax.imageio.event.IIOWriteProgressListener;
+import javax.imageio.stream.FileImageOutputStream;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 
 public class ImageSaver extends SwingWorker<Boolean, String> 
-            implements IIOWriteProgressListener {
+            implements IIOWriteProgressListener,
+                       PropertyChangeListener {
    private JProgressBar mStatusBar;
    private BufferedImage mImage;
    private File mOutputFile;
+   private ImageWriter mImageWriter;
    
    public ImageSaver(JProgressBar statusBar, BufferedImage image, File output) {
       mStatusBar = statusBar;
       mImage = image;
       mOutputFile = output;
-      setProgressListener();
+      addPropertyChangeListener(this);
    }
    
-   private void setProgressListener() {
-      Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("png");
-      ImageWriter writer = (ImageWriter)writers.next();
+   private void setProgressListener(ImageWriter writer) {
       writer.addIIOWriteProgressListener(this);
    }
    
-   private void removeProgressListeners() {
-      Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("png");
-      ImageWriter writer = (ImageWriter)writers.next();
+   private void removeProgressListeners(ImageWriter writer) {
       writer.removeIIOWriteProgressListener(this);
+   }
+   
+   private ImageWriter getWriter() {
+      return (ImageWriter)ImageIO.getImageWritersByFormatName("png").next();
    }
    
    @Override
    protected Boolean doInBackground() {
-      try {
-         ImageIO.write(mImage, "png", mOutputFile);
+      mImageWriter = getWriter();
+      try (FileImageOutputStream ifoStream = new FileImageOutputStream(mOutputFile))
+      {
+         mImageWriter.setOutput(ifoStream);
+         setProgressListener(mImageWriter);
+         mImageWriter.write(mImage);
+         removeProgressListeners(mImageWriter);
+         mImageWriter = null;
          return true;
       } catch(IOException ex) {
          return false;
-      }
+      } 
    }
    
    @Override
    protected void done() {
       mStatusBar.setValue(0);
-      removeProgressListeners();
    }
 
+   @Override
+   public void propertyChange(PropertyChangeEvent e) {
+      String property = e.getPropertyName();
+      if("state".equals(property))
+      {
+         if(isCancelled() && mImageWriter != null) {
+            mImageWriter.abort();
+         }
+      }      
+   }
+   
    @Override
    public void imageComplete(ImageWriter arg0) {
       mStatusBar.setValue(0);
