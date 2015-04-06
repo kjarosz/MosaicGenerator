@@ -58,6 +58,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       BufferedImage mOriginal;
       BufferedImage mScaled;
       BufferedImage mCellSized;
+      byte[] mCellSizedRaster;
       int mUseCount;
    }
    
@@ -101,6 +102,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    
    @Override
    protected BufferedImage doInBackground() {
+      long nanoTime = System.nanoTime();
+      
       BufferedImage[][] subImages = getCells();
       
       if(isCancelled()) return null;
@@ -110,6 +113,8 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       if(isCancelled()) return null;
       
       BufferedImage result = assembleImage(tiles);
+      
+      System.out.println((System.nanoTime() - nanoTime)*Math.pow(10, -9));
       
       return result;
    }
@@ -204,7 +209,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    private int calculateMismatch(Tile tile, BufferedImage cell) {
       prepareTile(tile, cell.getType());
       byte cellRaster[] = getData(cell);
-      byte tileRaster[] = getData(tile.mCellSized);
+      byte tileRaster[] = getData(tile);
       int difference = 0;
       if(cell.getAlphaRaster() != null) {
          difference = normalizeAlphaPixelDiff(cellRaster, tileRaster);
@@ -238,6 +243,13 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       DataBuffer buff = rasta.getDataBuffer();
       DataBufferByte byteBuff = (DataBufferByte)buff;
       return byteBuff.getData();
+   }
+   
+   private byte[] getData(Tile tile) {
+      if(tile.mCellSizedRaster == null) {
+         tile.mCellSizedRaster = getData(tile.mCellSized);
+      }
+      return tile.mCellSizedRaster;
    }
    
    private int normalizeAlphaPixelDiff(byte cellRaster[], byte tileRaster[]) {
