@@ -102,8 +102,6 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
    
    @Override
    protected BufferedImage doInBackground() {
-      long nanoTime = System.nanoTime();
-      
       BufferedImage[][] subImages = getCells();
       
       if(isCancelled()) return null;
@@ -113,8 +111,6 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       if(isCancelled()) return null;
       
       BufferedImage result = assembleImage(tiles);
-      
-      System.out.println((System.nanoTime() - nanoTime)*Math.pow(10, -9));
       
       return result;
    }
