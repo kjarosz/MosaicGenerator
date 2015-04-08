@@ -54,6 +54,9 @@ public class ResultsPage extends JPanel {
       repaint();
    }
    
+   /* ********************************************************************** */
+   /*                                VIEW                                    */
+   /* ********************************************************************** */
    private void createWidgets() {
       setLayout(new BorderLayout());
       createResultView();
