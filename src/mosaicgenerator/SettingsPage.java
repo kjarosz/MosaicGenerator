@@ -105,6 +105,7 @@ public class SettingsPage extends JPanel {
    private void createTileReusePanel(JPanel parent) {
       JPanel panel = makeSectionPanel("Reuse Tiles");
       mReuseTiles = new JCheckBox("Reuse Tiles", true);
+      mReuseTiles.setVisible(false);
       mReusePenalty = new JTextField(DEFAULT_REUSE_PENALTY, 4);
       panel.add(mReuseTiles);
       panel.add(new JLabel("Reuse Penalty"));
