@@ -49,9 +49,8 @@ import java.awt.image.Raster;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
-
-import mosaicgenerator.MainImagePanel;
 
 public class MosaicMaker extends SwingWorker<BufferedImage, String> {   
    private static class Tile {
@@ -62,7 +61,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       int mUseCount;
    }
    
-   private MainImagePanel mStatusReporter;
+   private JProgressBar mStatusReporter;
    private BufferedImage mImage;
    private LinkedList<Tile> mTiles;
    
@@ -78,7 +77,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
     * @param image          Image that will be turned to a mosaic.
     * @param tiles          Images to be used as tiles in creating the mosaic.
     */
-   public MosaicMaker(MainImagePanel statusReporter, BufferedImage image,
+   public MosaicMaker(JProgressBar statusReporter, BufferedImage image,
             LinkedList<BufferedImage> tiles, Settings settings) {
       mStatusReporter = statusReporter;
       mImage = image;
@@ -137,7 +136,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
             
             cells[i][j] = getCell(i, j);
             
-            publishStatus(1, calculateProgress(++processed, total));
+            publishStatus(0, (float)++processed/(float)total);
          }
       }
       
@@ -177,7 +176,7 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
                return null;
             }
             selectedTiles[i][j] = selectTile(subImages[i][j]);
-            publishStatus(2, calculateProgress(++selected, total));
+            publishStatus(1, (float)++selected/(float)total);
          }
       }
       return selectedTiles;
@@ -311,34 +310,26 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
                         mTileDimension.height,
                         null);
             
-            publishStatus(3, calculateProgress(++processed, total));
+            publishStatus(2, (float)++processed/(float)total);
          }
       }
    }
    
-   private int calculateProgress(int processed, int total) {
-      float progress = (float)processed/(float)total;
-      return (int)(progress*100.0);
-   }
-   
-   private void publishStatus(int stage, int progress) {
-      setProgress(progress);
-      publish("Stop (" + stage + "/3 - " 
-               + progress + "% )");
+   private void publishStatus(int stage, float progress) {
+      int actualProgress = (int)(33.3f*stage + 33.3f*progress);
+      setProgress(actualProgress);
+      publish("");
    }
    
    @Override
    protected void process(List<String> messages) {
-      if(!messages.isEmpty()) {
-         if(isCancelled()) return;
-         
-         String message = messages.get(messages.size()-1);
-         mStatusReporter.setStatus(false, message);
+      if(!isCancelled()) {
+         mStatusReporter.setValue(getProgress());
       }
    }
    
    @Override
    protected void done() {
-      mStatusReporter.setStatus(true, null);
+      mStatusReporter.setValue(0);
    }
 }

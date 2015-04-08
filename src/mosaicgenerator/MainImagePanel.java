@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -26,12 +25,10 @@ public class MainImagePanel extends JPanel {
    private ImageButton mImageButton;
    private JTextField mImagePath;
    
-   private JButton mTriggerButton;
-   
-   public MainImagePanel(ActionListener triggerListener) {
+   public MainImagePanel() {
       setLayout(new BorderLayout());
       createScrollPaneButton();
-      createControlPanel(triggerListener);
+      createControlPanel();
    }
    
    private void createScrollPaneButton() {
@@ -40,12 +37,10 @@ public class MainImagePanel extends JPanel {
       add(mScrollPane, BorderLayout.CENTER);
    }
    
-   private void createControlPanel(ActionListener triggerListener) {
+   private void createControlPanel() {
       JPanel controlPanel = new JPanel();
       controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
       createImageLoader(controlPanel);
-      controlPanel.add(Box.createHorizontalGlue());
-      createTrigger(controlPanel, triggerListener);
       add(controlPanel, BorderLayout.SOUTH);
    }
    
@@ -113,25 +108,11 @@ public class MainImagePanel extends JPanel {
             JOptionPane.ERROR_MESSAGE);
    }
    
-   private void createTrigger(JPanel parent, ActionListener triggerListener) {
-      mTriggerButton = new JButton("Create Mosaic.");
-      mTriggerButton.addActionListener(triggerListener);
-      parent.add(mTriggerButton);
-   }
-   
    public boolean hasImage() {
       return mImageButton != null;
    }
    
    public BufferedImage image() {
       return mImageButton.getImage();
-   }
-   
-   public void setStatus(boolean done, String text) {
-      if(done) {
-         mTriggerButton.setText("Create Mosaic");
-      } else {
-         mTriggerButton.setText(text);
-      }
    }
 }
