@@ -32,6 +32,8 @@ public class ResultsPage extends JPanel {
    private ImageButton mResultButton;
    private JScrollPane mScrollPane;
    
+   private JPanel mButtonPanel;
+   
    private JProgressBar mProgressBar;
    private JButton mSaveButton;
    private JButton mMakeMosaicButton;
@@ -70,12 +72,12 @@ public class ResultsPage extends JPanel {
    }
    
    private void createSouthPanel() {
-      JPanel buttonPanel = new JPanel();
-      buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-      addProgressBar(buttonPanel);
-      addSaveButton(buttonPanel);
-      addGenerateButton(buttonPanel);
-      add(buttonPanel, BorderLayout.SOUTH);
+      mButtonPanel = new JPanel();
+      mButtonPanel.setLayout(new BoxLayout(mButtonPanel, BoxLayout.X_AXIS));
+      addProgressBar(mButtonPanel);
+      addSaveButton(mButtonPanel);
+      addGenerateButton(mButtonPanel);
+      add(mButtonPanel, BorderLayout.SOUTH);
    }
 
    private void addProgressBar(JPanel savePanel) {
@@ -232,22 +234,26 @@ public class ResultsPage extends JPanel {
       case SAVING:
          mSaveButton.setText("Stop Saving");
          mMakeMosaicButton.setEnabled(false);
+         mMakeMosaicButton.setVisible(false);
          break;
       case MOSAIC:
          mMakeMosaicButton.setText("Stop");
          mSaveButton.setEnabled(false);
+         mSaveButton.setVisible(false);
          break;
       case STANDBY:
          mSaveButton.setEnabled(true);
+         mSaveButton.setVisible(true);
          mSaveButton.setText("Save Image");
          
          mMakeMosaicButton.setEnabled(true);
+         mMakeMosaicButton.setVisible(true);
          mMakeMosaicButton.setText("Make Mosaic");
          break;
       }
       
-      mSaveButton.repaint();
-      mMakeMosaicButton.repaint();
+      mButtonPanel.revalidate();
+      mButtonPanel.repaint();
       
       mButtonState = state;
    }
