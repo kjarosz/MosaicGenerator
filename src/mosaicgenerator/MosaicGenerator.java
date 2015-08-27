@@ -1,7 +1,5 @@
 package mosaicgenerator;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedList;
@@ -21,7 +19,6 @@ public class MosaicGenerator extends JFrame {
    private JTabbedPane mTabbedPane;   
    private MainImagePanel mImagePanel;
    private ImageFolders mFoldersPanel;
-   private SettingsPage mSettingsPanel;
    private ResultsPage mResultsPage;    
    
    private Settings mSettings;
@@ -51,7 +48,6 @@ public class MosaicGenerator extends JFrame {
       mTabbedPane = new JTabbedPane();
       addMainImagePanel(mTabbedPane);      
       addFolderViewer(mTabbedPane);
-      addSettingsPage(mTabbedPane);
       addResultsPage(mTabbedPane);
       add(mTabbedPane);
    }
@@ -66,36 +62,9 @@ public class MosaicGenerator extends JFrame {
       parent.addTab("2. Folders", mFoldersPanel);
    }
    
-   private void addSettingsPage(JTabbedPane parent) {
-      ActionListener saveAction = makeSaveSettingAction();
-      mSettingsPanel = new SettingsPage(saveAction);
-      parent.addTab("3. Settings", mSettingsPanel);
-   }
-   
-   private ActionListener makeSaveSettingAction() {
-      return new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               Settings settings = mSettingsPanel.getSettings();
-               applySettings(settings);
-            } catch(RuntimeException ignore) {}
-         }
-      };
-   }
-   
-   private void applySettings(Settings settings) {
-      mSettings.cellWidth = settings.cellWidth;
-      mSettings.cellHeight = settings.cellHeight;
-      mSettings.tileWidth = settings.tileWidth;
-      mSettings.tileHeight = settings.tileHeight;
-      mSettings.reuseTiles = settings.reuseTiles;
-      mSettings.reusePenalty = settings.reusePenalty;
-   }
-   
    private void addResultsPage(JTabbedPane parent) {
       mResultsPage = new ResultsPage(createMosaicMakerCallback());
-      parent.addTab("4. Generator", mResultsPage);
+      parent.addTab("3. Generator", mResultsPage);
    }
    
    private MosaicMakerCallback createMosaicMakerCallback() {
