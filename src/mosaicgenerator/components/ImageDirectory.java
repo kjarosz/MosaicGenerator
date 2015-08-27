@@ -39,7 +39,7 @@ public class ImageDirectory extends JButton implements MouseListener {
    
    public ImageDirectory(JPanel imagePanel) {
       mDirectory = null;
-      mLoading = false;
+      mLoading = true;
       mSelected = false;
       mHover = false;
       mImages = new HashMap<>();
