@@ -54,17 +54,17 @@ public class MosaicGenerator extends JFrame {
    
    private void addMainImagePanel(JTabbedPane parent) {
       mImagePanel = new MainImagePanel();
-      parent.addTab("1. Image", mImagePanel);
+      parent.addTab("1. Source Image", mImagePanel);
    }
    
    private void addFolderViewer(JTabbedPane parent) {
       mFoldersPanel = new ImageFolders();
-      parent.addTab("2. Folders", mFoldersPanel);
+      parent.addTab("2. Source Tiles", mFoldersPanel);
    }
    
    private void addResultsPage(JTabbedPane parent) {
       mResultsPage = new ResultsPage(createMosaicMakerCallback());
-      parent.addTab("3. Generator", mResultsPage);
+      parent.addTab("3. Mosaic", mResultsPage);
    }
    
    private MosaicMakerCallback createMosaicMakerCallback() {
