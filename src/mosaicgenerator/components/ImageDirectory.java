@@ -7,7 +7,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,40 +61,41 @@ public class ImageDirectory extends JButton implements MouseListener {
       mDirectory = directory;
       mBackgroundLoader = new DirectoryLoader(this);
       mBackgroundLoader.addPropertyChangeListener(
-            getProgressTracker());
+            (e) -> trackProgress(e));
       mBackgroundLoader.execute();
    }
    
    public void removeImages() {
-      for(ImageThumbnail item: mThumbnails) {
+      mThumbnails.stream().forEach((item) -> {
          mImagePanel.remove(item);
-      }
+      });
    }
    
    public Collection<BufferedImage> images() {
       return mImages.values();
    }
    
-   private PropertyChangeListener getProgressTracker() {
-      return new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent e) {
-           String property = e.getPropertyName();
-           if("state".equals(property)) {
-              changeState(e.getNewValue().toString());
-           } else if("progress".equals(property)) {
-              repaint();
-           }
-        }
-      };
+   private void trackProgress(PropertyChangeEvent e) {
+      String property = e.getPropertyName();
+      if(null != property) switch (property) {
+         case "state":
+            changeState(e.getNewValue().toString());
+            break;
+         case "progress":
+            repaint();
+            break;
+      }
    }
    
    private void changeState(String state) {
-      if("STARTED".equals(state)) {
-         mLoading = true;
-      } else if("DONE".equals(state)) {
-         mLoading = false;
-         mBackgroundLoader = null;
+      if(null != state) switch (state) {
+         case "STARTED":
+            mLoading = true;
+            break;
+         case "DONE":
+            mLoading = false;
+            mBackgroundLoader = null;
+            break;
       }
       repaint();
    }
@@ -104,14 +104,17 @@ public class ImageDirectory extends JButton implements MouseListener {
       return mDirectory;
    }
    
+   @Override
    public Dimension getMinimumSize() {
       return new Dimension(100, 50);
    }
    
+   @Override
    public Dimension getPreferredSize() {
       return new Dimension(0, 50);
    }
    
+   @Override
    public Dimension getMaximumSize() {
       return new Dimension(Integer.MAX_VALUE, 50);
    }
