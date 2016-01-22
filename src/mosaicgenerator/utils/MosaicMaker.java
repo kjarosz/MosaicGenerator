@@ -118,23 +118,28 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
     * Step 1 - Divide image into cells.                                       *
     * *********************************************************************** */
    private BufferedImage[][] getCells() {
-      int cols = (int)(Math.ceil((double)mImage.getWidth()
-            /(double)mCellSize.width));
-      int rows = (int)(Math.ceil((double)mImage.getHeight()
-            /(double)mCellSize.height));
+      int imgWidth = mImage.getWidth();
+      int imgHeight = mImage.getHeight();
+
+      // Array dimensions
+      int cols = (int)(Math.ceil((double)imgWidth/(double)mCellSize.width));
+      int rows = (int)(Math.ceil((double)imgHeight/(double)mCellSize.height));
       
+      // Progress tracking
       int processed = 0, total = rows*cols;
       
       BufferedImage cells[][] = new BufferedImage[cols][];
-      for(int i = 0; i < cells.length; i++) {
+      for(int i = 0, col = 0; i < imgWidth; i += mCellSize.width, col++) {
+         int cellWidth = Math.min(mCellSize.width, imgWidth - i);
          
-         cells[i] = new BufferedImage[rows];
-         for(int j = 0; j < cells[i].length; j++) {
+         cells[col] = new BufferedImage[rows];
+         for(int j = 0, row = 0; j < imgHeight; j += mCellSize.height, row++) {
             if(isCancelled()) {
                return null;
             }
+            int cellHeight = Math.min(mCellSize.height, imgHeight - j);
             
-            cells[i][j] = getCell(i, j);
+            cells[col][row] = getCell(i, j, cellWidth, cellHeight);
             
             publishStatus(0, (float)++processed/(float)total);
          }
@@ -143,20 +148,14 @@ public class MosaicMaker extends SwingWorker<BufferedImage, String> {
       return cells;
    }
    
-   private BufferedImage getCell(int col, int row) {
-      int x = mCellSize.width*col;
-      int y = mCellSize.height*row;
-      int width = (mImage.getWidth() - x < mCellSize.width) ?
-            mImage.getWidth() - x : mCellSize.width;
-      int height = (mImage.getHeight() - y < mCellSize.height) ?
-            mImage.getHeight() - x : mCellSize.height;
+   private BufferedImage getCell(int col, int row, int cellWidth, int cellHeight) {
       int type = mImage.getType();
       
-      BufferedImage cell = new BufferedImage(width, height, type);
+      BufferedImage cell = new BufferedImage(cellWidth, cellHeight, type);
       Graphics2D g2 = cell.createGraphics();
       g2.drawImage(mImage, 
-            0, 0, width, height,
-            x, y, x + width, y + height,
+            0, 0, cellWidth, cellHeight,
+            col, row, col + cellWidth, row + cellHeight,
             null);
       g2.dispose();
       return cell;
