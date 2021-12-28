@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	_ "image/gif"
 	"image/jpeg"
 	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,8 +20,8 @@ const (
 	DEFAULT_TILE_WIDTH  = 128
 	DEFAULT_TILE_HEIGHT = 128
 
-	DEFAULT_SOURCE_TILE_WIDTH  = 25
-	DEFAULT_SOURCE_TILE_HEIGHT = 25
+	DEFAULT_SOURCE_TILE_WIDTH  = 5
+	DEFAULT_SOURCE_TILE_HEIGHT = 5
 )
 
 type Parameters struct {

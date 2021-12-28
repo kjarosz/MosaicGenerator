@@ -21,6 +21,12 @@ type MosaicParameters struct {
 	sourceTileBounds image.Point
 }
 
+type tile struct {
+	image *image.RGBA
+	x     int
+	y     int
+}
+
 func createMosaic(img image.Image, sourceTiles []image.Image, params MosaicParameters) image.Image {
 	tiles := scaleTiles(sourceTiles, params.tileBounds)
 	if params.debug {
@@ -33,33 +39,44 @@ func createMosaic(img image.Image, sourceTiles []image.Image, params MosaicParam
 	gridDimensions.Y = int(math.Ceil(float64(originalBounds.Max.Y) / float64(params.sourceTileBounds.Y)))
 	scaledImage := rescaleImage(img, gridDimensions.X*params.sourceTileBounds.X, gridDimensions.Y*params.sourceTileBounds.Y)
 
+	tileChannel := make(chan tile, 10)
+
+	go func(tileChannel chan<- tile) {
+		for x := 0; x < gridDimensions.X; x++ {
+			for y := 0; y < gridDimensions.Y; y++ {
+				subRect := image.Rect(
+					x*params.sourceTileBounds.X,
+					y*params.sourceTileBounds.Y,
+					(x+1)*params.sourceTileBounds.X,
+					(y+1)*params.sourceTileBounds.Y)
+
+				var t tile
+				t.image = findClosestTile(scaledImage, subRect, tiles, params.tileBounds)
+				t.x = x
+				t.y = y
+				tileChannel <- t
+			}
+		}
+		close(tileChannel)
+	}(tileChannel)
+
 	mosaic := image.NewRGBA(image.Rect(0, 0, gridDimensions.X*params.tileBounds.X, gridDimensions.Y*params.tileBounds.Y))
 	i := 0
 	maxI := gridDimensions.X * gridDimensions.Y
-	for x := 0; x < gridDimensions.X; x++ {
-		for y := 0; y < gridDimensions.Y; y++ {
-			subRect := image.Rect(
-				x*params.sourceTileBounds.X,
-				y*params.sourceTileBounds.Y,
-				x*params.sourceTileBounds.X+params.sourceTileBounds.X,
-				y*params.sourceTileBounds.Y+params.sourceTileBounds.Y)
-			tile := findClosestTile(scaledImage, subRect, tiles, params.tileBounds)
-			for mx := 0; mx < params.tileBounds.X; mx++ {
-				for my := 0; my < params.tileBounds.Y; my++ {
-					draw.Draw(
-						mosaic,
-						image.Rect(
-							mx*params.tileBounds.X,
-							my*params.tileBounds.Y,
-							(mx+1)*params.tileBounds.X,
-							(my+1)*params.tileBounds.Y),
-						tile,
-						image.Pt(0, 0),
-						draw.Src,
-					)
-				}
-			}
-			i++
+	for tile := range tileChannel {
+		draw.Draw(
+			mosaic,
+			image.Rect(
+				tile.x*params.tileBounds.X,
+				tile.y*params.tileBounds.Y,
+				(tile.x+1)*params.tileBounds.X,
+				(tile.y+1)*params.tileBounds.Y),
+			tile.image,
+			image.Pt(0, 0),
+			draw.Src,
+		)
+		i++
+		if i%1000 == 0 || i == maxI {
 			log.Default().Printf("%d / %d = %f\n", i, maxI, float64(i)/float64(maxI))
 		}
 	}
@@ -110,8 +127,8 @@ func rescaleImage(originalImage image.Image, targetWidth int, targetHeight int) 
 	img := image.NewRGBA(image.Rect(0, 0, targetWidth, targetHeight))
 	for x := 0; x < targetWidth; x++ {
 		for y := 0; y < targetHeight; y++ {
-			nearestX := nearestNeighbor(x, targetWidth, originalBounds.Max.X)
-			nearestY := nearestNeighbor(y, targetHeight, originalBounds.Max.Y)
+			nearestX := nearestTargetNeighbor(x, targetWidth, originalBounds.Max.X)
+			nearestY := nearestTargetNeighbor(y, targetHeight, originalBounds.Max.Y)
 			img.Set(x, y, originalImage.At(nearestX, nearestY))
 		}
 	}
@@ -123,23 +140,30 @@ func findClosestTile(originalImage *image.RGBA, subRect image.Rectangle, tiles [
 	minScore = math.MaxUint64
 	tileIndex := -1
 
+	totalPixels := uint64(tileSize.X * tileSize.Y)
 	for i, tile := range tiles {
-		var tileScore uint64
+		var r, g, b uint64
 		for x := 0; x < tileSize.X; x++ {
 			for y := 0; y < tileSize.Y; y++ {
 				imageX := subRect.Min.X + nearestNeighbor(x, subRect.Dx(), tileSize.X)
 				imageY := subRect.Min.Y + nearestNeighbor(y, subRect.Dy(), tileSize.Y)
 
-				tr, tg, tb, _ := tile.RGBAAt(x, y).RGBA()
-				ir, ig, ib, _ := originalImage.At(imageX, imageY).RGBA()
+				iPixel := tile.PixOffset(x, y)
+				tr, tg, tb := tile.Pix[iPixel], tile.Pix[iPixel+1], tile.Pix[iPixel+2]
 
-				dr := ir/257 - tr/257
-				dg := ig/257 - tg/257
-				db := ib/257 - tb/257
+				iPixel = originalImage.PixOffset(imageX, imageY)
+				ir, ig, ib := originalImage.Pix[iPixel], originalImage.Pix[iPixel+1], originalImage.Pix[iPixel+2]
 
-				tileScore += uint64(dr*dr + dg*dg + db*db)
+				dr := ir - tr
+				dg := ig - tg
+				db := ib - tb
+
+				r += uint64(dr * dr)
+				g += uint64(dg * dg)
+				b += uint64(db * db)
 			}
 		}
+		tileScore := uint64(math.Sqrt(float64(r/totalPixels + g/totalPixels + b/totalPixels)))
 		if tileScore < minScore {
 			minScore = tileScore
 			tileIndex = i
@@ -154,6 +178,9 @@ func findClosestTile(originalImage *image.RGBA, subRect image.Rectangle, tiles [
 }
 
 func nearestNeighbor(val int, targetScale int, sourceScale int) int {
-	return int((float32(val) / float32(targetScale)) * float32(sourceScale))
+	return int((float32(val) / float32(sourceScale)) * float32(targetScale))
+}
 
+func nearestTargetNeighbor(val int, targetScale int, sourceScale int) int {
+	return int((float32(val) / float32(targetScale)) * float32(sourceScale))
 }
