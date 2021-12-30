@@ -22,6 +22,8 @@ const (
 
 	DEFAULT_SOURCE_TILE_WIDTH  = 5
 	DEFAULT_SOURCE_TILE_HEIGHT = 5
+
+	DEFAULT_USE_PENALTY = 15
 )
 
 type Parameters struct {
@@ -38,8 +40,9 @@ func getParameters() (Parameters, error) {
 	sourceImageDirectory := flag.String("image-dir", "images", "directory with images to use for mosaic")
 	tileWidth := flag.Int("tile-width", DEFAULT_TILE_WIDTH, "specify width of replacement tile")
 	tileHeight := flag.Int("tile-height", DEFAULT_TILE_HEIGHT, "specify height of replacement tile")
-	sourceTileWidth := flag.Int("source-tile-width", DEFAULT_SOURCE_TILE_WIDTH, "specify grid width to replace from source image")
-	sourceTileHeight := flag.Int("source-tile-height", DEFAULT_SOURCE_TILE_HEIGHT, "specify grid height to replace from source image")
+	cellWidth := flag.Int("cell-width", DEFAULT_SOURCE_TILE_WIDTH, "specify grid width to replace from source image")
+	cellHeight := flag.Int("cell-height", DEFAULT_SOURCE_TILE_HEIGHT, "specify grid height to replace from source image")
+	usePenalty := flag.Int("use-penalty", DEFAULT_USE_PENALTY, "add this value as penalty to a tile score each time it's used")
 
 	flag.Parse()
 
@@ -51,10 +54,11 @@ func getParameters() (Parameters, error) {
 	params.debug = *debugFlag
 	params.mosaicParameters.debug = *debugFlag
 	params.sourceImageDirectory = *sourceImageDirectory
-	params.mosaicParameters.tileBounds.X = *tileWidth
-	params.mosaicParameters.tileBounds.Y = *tileHeight
-	params.mosaicParameters.sourceTileBounds.X = *sourceTileWidth
-	params.mosaicParameters.sourceTileBounds.Y = *sourceTileHeight
+	params.mosaicParameters.tileSize.X = *tileWidth
+	params.mosaicParameters.tileSize.Y = *tileHeight
+	params.mosaicParameters.cellSize.X = *cellWidth
+	params.mosaicParameters.cellSize.Y = *cellHeight
+	params.mosaicParameters.usePenalty = int64(*usePenalty)
 
 	params.targetImageFilename = tail[0]
 
