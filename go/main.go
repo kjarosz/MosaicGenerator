@@ -86,10 +86,11 @@ func loadImage(filename string) (image.Image, error) {
 	return image, nil
 }
 
-func loadSourceImages(sourceDirectory string) ([]image.Image, error) {
+func loadTiles(sourceDirectory string) ([]image.Image, error) {
 	var images []image.Image
 	images = make([]image.Image, IMAGES_INIT_SIZE, IMAGES_CAP_SIZE)
 	err := filepath.WalkDir(sourceDirectory, func(path string, dir os.DirEntry, err error) error {
+		fmt.Println("Path:", path)
 		image, err := loadImage(path)
 		if err == nil {
 			images = append(images, image)
@@ -113,7 +114,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sourceImages, err := loadSourceImages(parameters.sourceImageDirectory)
+	sourceImages, err := loadTiles(parameters.sourceImageDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
